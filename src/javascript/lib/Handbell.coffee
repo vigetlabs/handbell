@@ -6,21 +6,37 @@ module.exports = class Handbell
 
   constructor: (audioUrl) ->
     @sound = new Sound(audioUrl)
+    @container = document.body
+    @text = document.getElementById('text')
     @listenForInput()
 
   listenForInput: ->
-    # Init sound with touch
-    document.body.addEventListener 'touchstart', @sound.play, false
-    document.body.addEventListener 'mousedown', @sound.play, false
-    # window.addEventListener "deviceorientation", @ring, false
+    document.body.addEventListener 'touchstart', @activate, false
+    document.body.addEventListener 'mousedown', @activate, false
+
+  activate: =>
+    @ding()
+    document.body.removeEventListener 'touchstart', @activate, false
     window.addEventListener "devicemotion", @ring, false
+
+  ring: =>
+    rotationRateZ = event.rotationRate.alpha
+    
+    if @dinged(rotationRateZ)
+      @ding()
+    else if @donged(rotationRateZ)
+      @dong()
 
   ding: ->
     @sound.play()
+    @container.setAttribute('class', 'ding')
+    @text.innerText = "ding!"
     @flipped = true
 
   dong: ->
     @sound.play()
+    @container.setAttribute('class', 'dong')
+    @text.innerText = "dong!"
     @flipped = false
 
   dinged: (rotationRate) ->
@@ -28,19 +44,3 @@ module.exports = class Handbell
 
   donged: (rotationRate) ->
     rotationRate < -@threshold and @flipped
-
-  ring: =>
-    rotationRateZ = event.rotationRate.alpha
-    @ding() if @dinged(rotationRateZ)
-    @dong() if @donged(rotationRateZ)
-      
-    @debug
-      state: "#{if @flipped then 'ding' else 'dong'}"
-      rotationZ: rotationRateZ
-
-  debug: (properties) ->
-    text =
-      for key of properties
-        "#{key}: #{properties[key]}"
-
-    document.body.innerText = text.join('\n')
