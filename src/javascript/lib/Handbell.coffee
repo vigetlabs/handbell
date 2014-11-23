@@ -1,9 +1,8 @@
 Sound = require('./Sound')
 
 module.exports = class Handbell
-  thresholdY: 25 #deg
-  lastX: 0
-  lastY: 0
+  
+  threshold: 150 # event.rotationRate.alpha threshold
 
   constructor: (audioUrl) ->
     @sound = new Sound(audioUrl)
@@ -13,23 +12,35 @@ module.exports = class Handbell
     # Init sound with touch
     document.body.addEventListener 'touchstart', @sound.play, false
     document.body.addEventListener 'mousedown', @sound.play, false
-    window.addEventListener "deviceorientation", @ring, false
+    # window.addEventListener "deviceorientation", @ring, false
+    window.addEventListener "devicemotion", @ring, false
+
+  ding: ->
+    @sound.play()
+    @flipped = true
+
+  dong: ->
+    @sound.play()
+    @flipped = false
+
+  dinged: (rotationRate) ->
+    rotationRate > @threshold and not @flipped
+
+  donged: (rotationRate) ->
+    rotationRate < -@threshold and @flipped
 
   ring: =>
-    x = event.beta + 0.5 | 0
-    y = event.gamma + 0.5 | 0
-    deltaY = Math.abs(y - @lastY)
-    @debug(x, y, deltaY)
+    rotationRateZ = event.rotationRate.alpha
+    @ding() if @dinged(rotationRateZ)
+    @dong() if @donged(rotationRateZ)
+      
+    @debug
+      state: "#{if @flipped then 'ding' else 'dong'}"
+      rotationZ: rotationRateZ
 
-    if deltaY > @thresholdY
-      @lastX = x
-      @lastY = y
-      @sound.play()
+  debug: (properties) ->
+    text =
+      for key of properties
+        "#{key}: #{properties[key]}"
 
-  debug: (x, y, deltaY)->
-    document.body.innerText = "
-      deviceorientation: #{x}, #{y} \n
-      deltaY = #{deltaY} \n
-      lastX = #{@lastX} \n
-      lastY = #{@lastY}
-    "
+    document.body.innerText = text.join('\n')
