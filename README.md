@@ -8,4 +8,4 @@ Run gulp
 node_modules/.bin/gulp
 ```
 
-Ring your bell at localhost:3000
+Point your phone at `{{ YOUR_LOCAL_IP_ADDRESS }}:3000` and start ringing!
