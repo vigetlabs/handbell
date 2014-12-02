@@ -1,5 +1,6 @@
 Sound        = require('./Sound')
 eventsModule = require('smokesignals')
+isAndroid = navigator.userAgent.toLowerCase().indexOf("android") > -1
 
 module.exports = class Handbell
 
@@ -27,6 +28,14 @@ module.exports = class Handbell
 
   ring: (e) =>
     motion = e.rotationRate.alpha
+
+    if motion
+      # Normalize android values
+      if isAndroid
+        motion *= 60 if isAndroid
+    else
+      # Fallback to acceleration if mot
+      motion = e.acceleration.z * 50
 
     if @forwardRing(motion)
       @ding()

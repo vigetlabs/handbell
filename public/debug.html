@@ -1,0 +1,62 @@
+<DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <title>Handbell</title>
+    <script>
+    var isAndroid = navigator.userAgent.toLowerCase().indexOf("android") > -1; //&& ua.indexOf("mobile");
+    maxRotationRate = 0
+    maxAcceleration = 0
+    function init() {
+      //Find our div containers in the DOM
+      var dataContainerOrientation = document.getElementById('dataContainerOrientation');
+      var dataContainerMotion = document.getElementById('dataContainerMotion');
+
+      //Check for support for DeviceOrientation event
+      if(window.DeviceOrientationEvent) {
+        window.addEventListener('deviceorientation', function(event) {
+                var alpha = event.alpha;
+                var beta = event.beta;
+                var gamma = event.gamma;
+
+                if(alpha!=null || beta!=null || gamma!=null)
+                  dataContainerOrientation.innerHTML = 'alpha: ' + alpha + '<br/>beta: ' + beta + '<br />gamma: ' + gamma;
+              }, false);
+      }
+
+      // Check for support for DeviceMotion events
+      if(window.DeviceMotionEvent) {
+      window.addEventListener('devicemotion', function(event) {
+                var x = event.acceleration.x;
+                var y = event.acceleration.y;
+                var z = event.acceleration.z;
+                var r = event.rotationRate.alpha;
+                var html = 'Acceleration:<br />';
+                if(isAndroid) {
+                  r *= 60
+                  z *= 1.1
+                }
+                maxRotationRate = Math.max(maxRotationRate, r);
+                maxAcceleration = Math.max(maxAcceleration, z);
+
+                html += 'x: ' + x +'<br />y: ' + y + '<br/>z: ' + z+ '<br />';
+                html += 'Rotation rate: ' + r + '<br>';
+                html += "maxRotationRate: " + maxRotationRate + '<br />';
+                html += "maxAcceleration: " + maxAcceleration + '<br />';
+                dataContainerMotion.innerHTML = html;
+              });
+      }
+    }
+    </script>
+  </head>
+  <body onload="init()">
+    <div id="dataContainerOrientation">
+      No device orientation data
+    </div>
+    <div id="dataContainerMotion">
+      No device motion data
+    </div>
+  </body>
+</html>
