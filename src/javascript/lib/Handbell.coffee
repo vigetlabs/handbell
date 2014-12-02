@@ -1,55 +1,56 @@
-Sound = require('./Sound')
+Sound        = require('./Sound')
+eventsModule = require('smokesignals')
 
 module.exports = class Handbell
 
   threshold: 400 # event.rotationRate.alpha threshold
 
   constructor: (audioUrl) ->
-    @sounds =
-      ding: new Sound('bell-F4.wav')
-      dong: new Sound('bell-C4.wav')
+    eventsModule.convert(@)
+    @sound = new Sound(audioUrl)
 
-    @container = document.body
-    @text = document.getElementById('text')
-    @listenForInput()
+  initialize: () =>
+    # Bell must be initialized by user input (touch) to play sounds on iOS
+    @sound.volume = 0
+    @sound.play()
+    @sound.volume = 1
 
-  listenForInput: ->
-    document.body.addEventListener 'touchstart', @activate, false
-    document.body.addEventListener 'mousedown', @activate, false
-
-  activate: =>
-    @ding()
-    @dong()
-    @notForward = true
-    @notBackward = true
-    document.body.removeEventListener 'touchstart', @activate, false
     window.addEventListener "devicemotion", @ring, false
 
-  ring: =>
-    zRotationRate = event.rotationRate.alpha
+    if @sound.buffer
+      @ready()
+    else
+      @sound.on('ready', @ready)
 
-    if @forwardRing(zRotationRate)
+  ready: =>
+    @emit('ready')
+
+  ring: (e) =>
+    motion = e.rotationRate.alpha
+
+    if @forwardRing(motion)
       @ding()
-    else if @backwardsRing(zRotationRate)
+    else if @backwardsRing(motion)
       @dong()
 
-    @notBackward ||= zRotationRate <= @threshold * .9
-    @notForward ||= zRotationRate >= -@threshold * .9
+    @updatePositionValues(motion)
 
   ding: ->
-    @sounds.ding.play()
-    @container.setAttribute('class', 'ding')
-    @text.innerText = "ding!"
-    @notForward = false
+    @isForwardPosition = true
+    @sound.play()
+    @emit('ding')
 
   dong: ->
-    @sounds.dong.play()
-    @container.setAttribute('class', 'dong')
-    @text.innerText = "dong!"
-    @notBackward = false
+    @isBackPosition = true
+    @sound.play()
+    @emit('dong')
 
-  forwardRing: (rotationRate) ->
-    rotationRate < -@threshold and @notForward
+  forwardRing: (motion) ->
+    motion < -@threshold and not @isForwardPosition
 
-  backwardsRing: (rotationRate) ->
-    rotationRate > @threshold * 1.5 and @notBackward
+  backwardsRing: (motion) ->
+    motion > @threshold * 1.75 and not @isBackPosition
+
+  updatePositionValues: (motion) ->
+    @isBackPosition = if @backPosition then motion >= @threshold * 0.9
+    @isForwardPosition = if @isForwardPosition then motion <= -@threshold * 0.9
