@@ -22,19 +22,22 @@ module.exports = class Handbell
     @dong()
     @notForward = true
     @notBackward = true
+    @maxAcceleration = 0
     document.body.removeEventListener 'touchstart', @activate, false
     window.addEventListener "devicemotion", @ring, false
 
   ring: =>
     zRotationRate = event.rotationRate.alpha
+    zAcceleration = event.acceleration.z
+    motionValue = zRotationRate + zAcceleration * 40
 
-    if @forwardRing(zRotationRate)
+    if @forwardRing(motionValue)
       @ding()
-    else if @backwardsRing(zRotationRate)
+    else if @backwardsRing(motionValue)
       @dong()
 
-    @notBackward ||= zRotationRate <= @threshold * .9
-    @notForward ||= zRotationRate >= -@threshold * .9
+    @notBackward ||= motionValue <= @threshold * .9
+    @notForward ||= motionValue >= -@threshold * .9
 
   ding: ->
     @sounds.ding.play()
@@ -52,4 +55,4 @@ module.exports = class Handbell
     rotationRate < -@threshold and @notForward
 
   backwardsRing: (rotationRate) ->
-    rotationRate > @threshold * 1.5 and @notBackward
+    rotationRate > @threshold and @notBackward
