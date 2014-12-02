@@ -1,11 +1,14 @@
 Sound = require('./Sound')
 
 module.exports = class Handbell
-  
-  threshold: 150 # event.rotationRate.alpha threshold
+
+  threshold: 400 # event.rotationRate.alpha threshold
 
   constructor: (audioUrl) ->
-    @sound = new Sound(audioUrl)
+    @sounds =
+      ding: new Sound('bell-F4.wav')
+      dong: new Sound('bell-C4.wav')
+
     @container = document.body
     @text = document.getElementById('text')
     @listenForInput()
@@ -16,31 +19,37 @@ module.exports = class Handbell
 
   activate: =>
     @ding()
+    @dong()
+    @notForward = true
+    @notBackward = true
     document.body.removeEventListener 'touchstart', @activate, false
     window.addEventListener "devicemotion", @ring, false
 
   ring: =>
-    rotationRateZ = event.rotationRate.alpha
-    
-    if @dinged(rotationRateZ)
+    zRotationRate = event.rotationRate.alpha
+
+    if @forwardRing(zRotationRate)
       @ding()
-    else if @donged(rotationRateZ)
+    else if @backwardsRing(zRotationRate)
       @dong()
 
+    @notBackward ||= zRotationRate <= @threshold * .9
+    @notForward ||= zRotationRate >= -@threshold * .9
+
   ding: ->
-    @sound.play()
+    @sounds.ding.play()
     @container.setAttribute('class', 'ding')
     @text.innerText = "ding!"
-    @flipped = true
+    @notForward = false
 
   dong: ->
-    @sound.play()
+    @sounds.dong.play()
     @container.setAttribute('class', 'dong')
     @text.innerText = "dong!"
-    @flipped = false
+    @notBackward = false
 
-  dinged: (rotationRate) ->
-    rotationRate > @threshold and not @flipped
+  forwardRing: (rotationRate) ->
+    rotationRate < -@threshold and @notForward
 
-  donged: (rotationRate) ->
-    rotationRate < -@threshold and @flipped
+  backwardsRing: (rotationRate) ->
+    rotationRate > @threshold * 1.5 and @notBackward
