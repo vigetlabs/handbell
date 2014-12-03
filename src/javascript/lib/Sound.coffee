@@ -1,5 +1,7 @@
 eventsModule = require('smokesignals')
 AudioContext = window.AudioContext || window.webkitAudioContext
+testAudio    = document.createElement('audio')
+mp3support   = !!(testAudio.canPlayType && testAudio.canPlayType('audio/mpeg;').replace(/no/, ''))
 
 module.exports = class Sound
 
@@ -8,7 +10,10 @@ module.exports = class Sound
   constructor: (url) ->
     eventsModule.convert(@)
     @context = new AudioContext()
-    @load(url)
+    @load(url + @extension())
+
+  extension: =>
+    if mp3support then '.mp3' else '.ogg'
 
   play: =>
     if @buffer

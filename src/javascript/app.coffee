@@ -2,7 +2,7 @@ Handbell = require('./lib/Handbell')
 
 container = document.body
 text = document.getElementById('text')
-handbell = new Handbell('bell-F4.wav')
+handbell = new Handbell('bell-F4')
 
 onDing = ->
   container.setAttribute('class', 'ding')
